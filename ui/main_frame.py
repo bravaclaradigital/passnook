@@ -147,7 +147,7 @@ class EntryCard(ctk.CTkFrame):
         dlg.configure(fg_color=SURFACE)
         set_icon(dlg)
 
-        dlg.after(10, lambda: center_over(dlg, self._root))
+        center_over(dlg, self._root)
         ctk.CTkLabel(dlg, text="Delete this entry?", font=(FF, 15, "bold"),
                      text_color=TEXT).pack(pady=(28, 4))
         ctk.CTkLabel(dlg, text="This cannot be undone.", font=FONT_XS,
@@ -251,8 +251,9 @@ class MainFrame(ctk.CTkFrame):
         self._sb_btn(bottom, "🔑  Generator", 0, self._open_generator)
         self._sb_btn(bottom, "📤  Backup",    1, self._export_backup)
         self._sb_btn(bottom, "📥  Restore",   2, self._restore_backup)
-        self._sb_btn(bottom, "ℹ️  About",     3, self._open_about)
-        self._sb_btn(bottom, "🔒  Lock",      4, self._on_lock,
+        self._sb_btn(bottom, "📋  Import CSV",3, self._import_csv)
+        self._sb_btn(bottom, "ℹ️  About",     4, self._open_about)
+        self._sb_btn(bottom, "🔒  Lock",      5, self._on_lock,
                      fg=DANGER, hover=DANGER_HOVER)
 
     def _sb_btn(self, parent, label, row, cmd, fg="transparent", hover=CARD_HOVER):
@@ -411,6 +412,71 @@ class MainFrame(ctk.CTkFrame):
             messagebox.showinfo("Backup saved", f"Backup saved to:\n{path}")
         except Exception as e:
             messagebox.showerror("Backup failed", str(e))
+
+    def _import_csv(self):
+        from tkinter import filedialog, messagebox
+        import csv
+
+        path = filedialog.askopenfilename(
+            title="Import passwords from CSV",
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+        )
+        if not path:
+            return
+
+        try:
+            with open(path, newline="", encoding="utf-8-sig") as f:
+                reader = csv.DictReader(f)
+                rows = list(reader)
+                headers = [h.lower().strip() for h in (reader.fieldnames or [])]
+        except Exception as e:
+            messagebox.showerror("Import failed", f"Could not read file:\n{e}")
+            return
+
+        if not rows:
+            messagebox.showinfo("Nothing to import", "The CSV file is empty.")
+            return
+
+        # ── Column detection — handles Chrome, Bitwarden, LastPass, 1Password, KeePass ──
+        def _col(row, *candidates):
+            for c in candidates:
+                for k in row:
+                    if k.lower().strip() == c:
+                        return row[k].strip()
+            return ""
+
+        imported = 0
+        skipped  = 0
+        for row in rows:
+            title = _col(row, "name", "title", "account", "label", "site")
+            url   = _col(row, "url", "login_uri", "website", "web site", "uri")
+            user  = _col(row, "username", "login name", "login_username", "user", "email", "login")
+            pw    = _col(row, "password", "login_password", "pass")
+            notes = _col(row, "notes", "note", "extra", "comment", "comments")
+
+            if not title and url:
+                # Fall back to domain as title
+                title = url.split("/")[2] if "//" in url else url
+            if not title:
+                skipped += 1
+                continue
+
+            self._vault.add({
+                "type":     "password",
+                "title":    title,
+                "url":      url,
+                "username": user,
+                "password": pw,
+                "notes":    notes,
+                "content":  "",
+            })
+            imported += 1
+
+        self._refresh()
+        msg = f"Imported {imported} password{'s' if imported != 1 else ''}."
+        if skipped:
+            msg += f"\n{skipped} row{'s' if skipped != 1 else ''} skipped (no name/title found)."
+        messagebox.showinfo("Import complete", msg)
 
     def _restore_backup(self):
         from tkinter import filedialog, messagebox, simpledialog

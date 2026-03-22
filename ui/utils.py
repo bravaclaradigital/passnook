@@ -16,14 +16,11 @@ def _res(rel: str) -> Path:
 def center_over(win: ctk.CTkToplevel, parent):
     """
     Center *win* over *parent*.
-    Uses withdraw → full render → centre → deiconify so the window
-    appears at the right position without any visible jump.
+    Uses update_idletasks (NOT update) to avoid deadlocking with grab_set().
     """
-    win.withdraw()
-    win.update()          # force full render so winfo_width/height are real
+    win.update_idletasks()
     ww = win.winfo_width()
     wh = win.winfo_height()
-    # Fallback to requested size if window hasn't expanded yet
     if ww < 10:
         ww = win.winfo_reqwidth()
     if wh < 10:
@@ -37,7 +34,6 @@ def center_over(win: ctk.CTkToplevel, parent):
     x = px + max(0, (pw - ww) // 2)
     y = py + max(0, (ph - wh) // 2)
     win.geometry(f"+{x}+{y}")
-    win.deiconify()
 
 
 def set_icon(win: ctk.CTkToplevel):
