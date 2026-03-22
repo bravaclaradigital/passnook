@@ -110,6 +110,13 @@ class VaultManager:
     def update(self, entry_id: str, updates: dict) -> None:
         for e in self._entries:
             if e["id"] == entry_id:
+                # Track password history when password changes
+                old_pw = e.get("password", "")
+                new_pw = updates.get("password", old_pw)
+                if old_pw and new_pw != old_pw:
+                    history = e.get("password_history", [])
+                    history.insert(0, {"password": old_pw, "changed": time.time()})
+                    e["password_history"] = history[:10]
                 e.update(updates)
                 e["modified"] = time.time()
                 break
@@ -147,4 +154,14 @@ class VaultManager:
     def _save(self) -> None:
         payload = json.dumps({"version": 1, "entries": self._entries}).encode("utf-8")
         token   = encrypt(payload, self._key)
-        VAULT_PATH.write_bytes(MAGIC + self._salt + token)
+        data    = MAGIC + self._salt + token
+
+        # Atomic write: write to .tmp then rename, so a crash mid-write
+        # never leaves a corrupt vault file.
+        tmp = VAULT_PATH.with_suffix(".tmp")
+        tmp.write_bytes(data)
+        # Keep a rolling backup of the last good save
+        if VAULT_PATH.exists():
+            import shutil
+            shutil.copy2(VAULT_PATH, VAULT_PATH.with_suffix(".bak"))
+        tmp.replace(VAULT_PATH)

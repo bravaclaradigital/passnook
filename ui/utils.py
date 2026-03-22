@@ -15,36 +15,45 @@ def _res(rel: str) -> Path:
 
 def center_over(win: ctk.CTkToplevel, parent):
     """
-    Center *win* over *parent*.
-    Uses withdraw → full render → centre → deiconify so the window
-    appears at the right position without any visible jump.
+    Center *win* over *parent* (walks up to the actual toplevel).
+    Uses update_idletasks (NOT update) to avoid deadlocking with grab_set().
     """
-    win.withdraw()
-    win.update()          # force full render so winfo_width/height are real
+    win.update_idletasks()
     ww = win.winfo_width()
     wh = win.winfo_height()
-    # Fallback to requested size if window hasn't expanded yet
     if ww < 10:
         ww = win.winfo_reqwidth()
     if wh < 10:
         wh = win.winfo_reqheight()
 
-    px = parent.winfo_rootx()
-    py = parent.winfo_rooty()
-    pw = parent.winfo_width()
-    ph = parent.winfo_height()
+    # Walk up to actual toplevel so we always get the real window position/size
+    p = parent
+    while p.master is not None and not isinstance(p, (ctk.CTk, ctk.CTkToplevel)):
+        p = p.master
+
+    px = p.winfo_rootx()
+    py = p.winfo_rooty()
+    pw = p.winfo_width()
+    ph = p.winfo_height()
 
     x = px + max(0, (pw - ww) // 2)
     y = py + max(0, (ph - wh) // 2)
+
+    # Clamp so the dialog never goes off screen
+    sw = win.winfo_screenwidth()
+    sh = win.winfo_screenheight()
+    x = max(0, min(x, sw - ww))
+    y = max(0, min(y, sh - wh))
     win.geometry(f"+{x}+{y}")
-    win.deiconify()
 
 
 def set_icon(win: ctk.CTkToplevel):
     """Apply PassNook icon to a Toplevel window."""
     icon_path = _res("assets/icon.ico")
     if icon_path.exists():
+        p = str(icon_path)
         try:
-            win.after(100, lambda: win.iconbitmap(str(icon_path)))
+            win.iconbitmap(p)
         except Exception:
             pass
+        win.after(150, lambda: win.iconbitmap(p) if win.winfo_exists() else None)

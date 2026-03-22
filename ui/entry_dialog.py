@@ -28,19 +28,20 @@ class EntryDialog(ctk.CTkToplevel):
 
         title = ("Edit" if self._is_edit else "Add") + " Entry"
         self.title(title)
+        self.geometry("460x660")
         self.resizable(False, False)
         self.configure(fg_color=SURFACE)
         self.grab_set()
+        self.focus()
 
         self._build()
         set_icon(self)
-        center_over(self, parent)
 
     # ── Build ─────────────────────────────────────────────────────────────────
 
     def _build(self):
         wrap = ctk.CTkFrame(self, fg_color="transparent")
-        wrap.pack(fill="both", expand=True, padx=28, pady=24)
+        wrap.pack(fill="both", expand=True, padx=24, pady=16)
         wrap.grid_columnconfigure(0, weight=1)
 
         row = 0
@@ -135,10 +136,25 @@ class EntryDialog(ctk.CTkToplevel):
         self._pw_widgets.append(self._str_bar)
         row += 1
 
-        self._str_lbl = ctk.CTkLabel(wrap, text="", font=FONT_XS, text_color=SUBTEXT)
-        self._str_lbl.grid(row=row, column=0, sticky="w")
-        self._pw_widgets.append(self._str_lbl)
+        str_row = ctk.CTkFrame(wrap, fg_color="transparent")
+        str_row.grid(row=row, column=0, sticky="ew")
+        str_row.grid_columnconfigure(0, weight=1)
+        self._pw_widgets.append(str_row)
         row += 1
+
+        self._str_lbl = ctk.CTkLabel(str_row, text="", font=FONT_XS, text_color=SUBTEXT)
+        self._str_lbl.grid(row=0, column=0, sticky="w")
+
+        # History button — only shown when editing an existing entry
+        if self._is_edit and self._entry.get("password_history"):
+            hist_btn = ctk.CTkButton(
+                str_row, text="🕐 History", width=80, height=22,
+                fg_color="transparent", hover_color=CARD,
+                text_color=SUBTEXT, font=FONT_XS,
+                corner_radius=4, command=self._show_history,
+            )
+            hist_btn.grid(row=0, column=1, sticky="e")
+            self._pw_widgets.append(hist_btn)
 
         self._pw_var.trace_add("write", self._on_pw_change)
 
@@ -150,7 +166,7 @@ class EntryDialog(ctk.CTkToplevel):
         init_notes = (self._entry.get("content") or self._entry.get("notes", "")) \
             if self._entry else ""
         self._notes_box = ctk.CTkTextbox(
-            wrap, height=90, fg_color=INPUT_BG, border_color=BORDER,
+            wrap, height=60, fg_color=INPUT_BG, border_color=BORDER,
             border_width=2, text_color=TEXT, font=FONT_SM,
             corner_radius=INPUT_RADIUS, wrap="word",
         )
@@ -230,6 +246,49 @@ class EntryDialog(ctk.CTkToplevel):
         self._str_bar.configure(progress_color=color)
         self._str_lbl.configure(text=label, text_color=color)
 
+    def _show_history(self):
+        import time as _time
+        history = self._entry.get("password_history", [])
+        if not history:
+            return
+
+        dlg = ctk.CTkToplevel(self)
+        dlg.title("Password History")
+        dlg.geometry("380x300")
+        dlg.resizable(False, False)
+        dlg.grab_set()
+        dlg.focus()
+        dlg.configure(fg_color=SURFACE)
+        set_icon(dlg)
+
+        ctk.CTkLabel(dlg, text="Password History", font=(FF, 15, "bold"),
+                     text_color=TEXT).pack(pady=(20, 4), padx=20, anchor="w")
+        ctk.CTkLabel(dlg, text="Click a password to restore it.",
+                     font=FONT_XS, text_color=SUBTEXT).pack(padx=20, anchor="w")
+
+        scroll = ctk.CTkScrollableFrame(dlg, fg_color=CARD, corner_radius=8)
+        scroll.pack(fill="both", expand=True, padx=16, pady=12)
+        scroll.grid_columnconfigure(0, weight=1)
+
+        for i, h in enumerate(history):
+            ts = _time.strftime("%Y-%m-%d %H:%M", _time.localtime(h["changed"]))
+            pw = h["password"]
+            row_frame = ctk.CTkFrame(scroll, fg_color="transparent")
+            row_frame.grid(row=i, column=0, sticky="ew", pady=3)
+            row_frame.grid_columnconfigure(0, weight=1)
+            ctk.CTkLabel(row_frame, text=ts, font=FONT_XS,
+                         text_color=SUBTEXT).grid(row=0, column=0, sticky="w")
+            ctk.CTkButton(
+                row_frame, text=pw, font=("Consolas", 12),
+                fg_color=INPUT_BG, hover_color=BORDER,
+                text_color=ACCENT_LIGHT, anchor="w",
+                command=lambda p=pw: (self._pw_var.set(p), self._pw_entry.configure(show=""), dlg.destroy()),
+            ).grid(row=1, column=0, sticky="ew", pady=(2, 0))
+
+        ctk.CTkButton(dlg, text="Close", height=34,
+                      fg_color=CARD, hover_color=CARD_HOVER, text_color=TEXT,
+                      command=dlg.destroy).pack(pady=(0, 12))
+
     def _open_generator(self):
         from ui.generator_dialog import GeneratorDialog
         dlg = GeneratorDialog(self, on_use=self._use_generated)
@@ -287,9 +346,10 @@ class EntryDialog(ctk.CTkToplevel):
         else:
             self._vault.add(data)
 
+        on_save = self._on_save
         self.destroy()
-        if self._on_save:
-            self._on_save()
+        if on_save:
+            on_save()
 
     def _show_err(self, msg: str):
         self._err_lbl.configure(text=msg)

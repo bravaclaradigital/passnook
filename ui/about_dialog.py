@@ -24,13 +24,14 @@ class AboutDialog(ctk.CTkToplevel):
     def __init__(self, parent):
         super().__init__(parent)
         self.title("About PassNook")
+        self.geometry("360x500")
         self.resizable(False, False)
         self.configure(fg_color=SURFACE)
         self.grab_set()
+        self.focus()
 
         self._build()
         set_icon(self)
-        center_over(self, parent)
 
     def _build(self):
         wrap = ctk.CTkFrame(self, fg_color="transparent")

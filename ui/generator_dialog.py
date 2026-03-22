@@ -21,14 +21,15 @@ class GeneratorDialog(ctk.CTkToplevel):
         self._parent   = parent
 
         self.title("Password Generator")
+        self.geometry("420x440")
         self.resizable(False, False)
         self.configure(fg_color=SURFACE)
         self.grab_set()
+        self.focus()
 
         self._build()
         self._regenerate()
         set_icon(self)
-        center_over(self, parent)
 
     def _build(self):
         wrap = ctk.CTkFrame(self, fg_color="transparent")

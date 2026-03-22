@@ -1,13 +1,19 @@
 # -*- mode: python ; coding: utf-8 -*-
 # Build: C:\Python313\python.exe -m PyInstaller PassNook.spec --noconfirm
 
+import subprocess, sys
+_CTK_PATH = subprocess.check_output(
+    [sys.executable, "-c",
+     "import customtkinter; print(customtkinter.__path__[0])"],
+    text=True).strip()
+
 a = Analysis(
     ['passnook.py'],
     pathex=[],
     binaries=[],
     datas=[
         ('assets', 'assets'),
-        ('assets/brava-logo.png', 'assets'),
+        (_CTK_PATH, 'customtkinter'),
     ],
     hiddenimports=[
         'customtkinter',
