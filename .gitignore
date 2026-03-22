@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+dist/
+build/
+*.egg-info/
+.env
+.venv/
+venv/
+*.pn
+vault.json
+assets/preview_*.png
