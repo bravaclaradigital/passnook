@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(C:/Python313/python.exe make_assets.py)",
+      "Bash(C:/Python313/python.exe -m PyInstaller PassNook.spec --noconfirm)",
+      "Bash(taskkill /f /im PassNook.exe)",
+      "Bash(taskkill //f //im PassNook.exe)",
+      "Bash(cmd //c \"taskkill /f /im PassNook.exe\")",
+      "Bash(cmd //c \"ie4uinit.exe -show\")",
+      "Bash(cmd //c \"taskkill /f /im explorer.exe && del /f /q \"\"%localappdata%\\\\IconCache.db\"\" && del /f /q \"\"%localappdata%\\\\Microsoft\\\\Windows\\\\Explorer\\\\iconcache*\"\" && start explorer.exe\")",
+      "Bash(cmd //c \"del /f /q \"\"%LOCALAPPDATA%\\\\IconCache.db\"\" 2>nul & del /f /q \"\"%LOCALAPPDATA%\\\\Microsoft\\\\Windows\\\\Explorer\\\\iconcache_*.db\"\" 2>nul & start explorer.exe\")",
+      "Bash(find /c/brava -name brava* -o -name *brava*logo*)",
+      "Bash(C:/Python313/python.exe -c \":*)"
+    ]
+  }
+}
