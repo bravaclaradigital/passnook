@@ -4,6 +4,7 @@ PassNook — About dialog
 
 from __future__ import annotations
 import sys
+import webbrowser
 from pathlib import Path
 
 import customtkinter as ctk
@@ -12,7 +13,7 @@ from PIL import Image
 from ui.styles import *
 from ui.utils import center_over, set_icon
 
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 
 
 def _res(rel: str) -> Path:
@@ -24,7 +25,7 @@ class AboutDialog(ctk.CTkToplevel):
     def __init__(self, parent):
         super().__init__(parent)
         self.title("About PassNook")
-        self.geometry("360x500")
+        self.geometry("360x560")
         self.resizable(False, False)
         self.configure(fg_color=SURFACE)
         self.grab_set()
@@ -32,6 +33,7 @@ class AboutDialog(ctk.CTkToplevel):
 
         self._build()
         set_icon(self)
+        center_over(self, parent)
 
     def _build(self):
         wrap = ctk.CTkFrame(self, fg_color="transparent")
@@ -64,6 +66,15 @@ class AboutDialog(ctk.CTkToplevel):
             font=FONT_XS, text_color=PLACEHOLDER, justify="center",
         ).pack(pady=(6, 14))
 
+        # GitHub link
+        gh_lbl = ctk.CTkLabel(
+            wrap, text="View on GitHub →",
+            font=FONT_SM, text_color=ACCENT_LIGHT, cursor="hand2",
+        )
+        gh_lbl.pack(pady=(0, 14))
+        gh_lbl.bind("<Button-1>", lambda _e: webbrowser.open(
+            "https://github.com/bravaclaradigital/passnook"))
+
         # Divider
         ctk.CTkFrame(wrap, height=1, fg_color=BORDER, width=260).pack(pady=(0, 14))
 
@@ -76,10 +87,14 @@ class AboutDialog(ctk.CTkToplevel):
             target_w = 130
             target_h = int(h * target_w / w)
             brava_img = ctk.CTkImage(raw, size=(target_w, target_h))
-            ctk.CTkLabel(wrap, image=brava_img, text="").pack(pady=(0, 6))
+            brava_lbl = ctk.CTkLabel(wrap, image=brava_img, text="", cursor="hand2")
+            brava_lbl.pack(pady=(0, 4))
+            brava_lbl.bind("<Button-1>", lambda _e: webbrowser.open("https://bravait.com"))
 
-        ctk.CTkLabel(wrap, text="© 2026 Brava IT · bravait.com",
-                     font=FONT_XS, text_color=PLACEHOLDER).pack(pady=(0, 14))
+        site_lbl = ctk.CTkLabel(wrap, text="© 2026 Brava IT · bravait.com",
+                                font=FONT_XS, text_color=PLACEHOLDER, cursor="hand2")
+        site_lbl.pack(pady=(0, 14))
+        site_lbl.bind("<Button-1>", lambda _e: webbrowser.open("https://bravait.com"))
 
         ctk.CTkButton(
             wrap, text="Close", width=120, height=36,

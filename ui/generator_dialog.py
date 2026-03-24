@@ -30,6 +30,7 @@ class GeneratorDialog(ctk.CTkToplevel):
         self._build()
         self._regenerate()
         set_icon(self)
+        center_over(self, parent)
 
     def _build(self):
         wrap = ctk.CTkFrame(self, fg_color="transparent")

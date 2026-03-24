@@ -36,6 +36,7 @@ class EntryDialog(ctk.CTkToplevel):
 
         self._build()
         set_icon(self)
+        center_over(self, parent)
 
     # ── Build ─────────────────────────────────────────────────────────────────
 

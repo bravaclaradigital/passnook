@@ -52,8 +52,12 @@ def set_icon(win: ctk.CTkToplevel):
     icon_path = _res("assets/icon.ico")
     if icon_path.exists():
         p = str(icon_path)
-        try:
-            win.iconbitmap(p)
-        except Exception:
-            pass
-        win.after(150, lambda: win.iconbitmap(p) if win.winfo_exists() else None)
+        def _apply():
+            if win.winfo_exists():
+                try:
+                    win.iconbitmap(p)
+                except Exception:
+                    pass
+        # Apply after CTK finishes its own internal icon setup
+        win.after(0, _apply)
+        win.after(200, _apply)

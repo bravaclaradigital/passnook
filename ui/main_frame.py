@@ -147,6 +147,7 @@ class EntryCard(ctk.CTkFrame):
         dlg.focus()
         dlg.configure(fg_color=SURFACE)
         set_icon(dlg)
+        center_over(dlg, self)
 
         ctk.CTkLabel(dlg, text="Delete this entry?", font=(FF, 15, "bold"),
                      text_color=TEXT).pack(pady=(28, 4))
@@ -249,12 +250,13 @@ class MainFrame(ctk.CTkFrame):
         bottom.grid(row=6, column=0, sticky="ew", padx=10, pady=(0, 18))
         bottom.grid_columnconfigure(0, weight=1)
 
-        self._sb_btn(bottom, "🔑  Generator", 0, self._open_generator)
-        self._sb_btn(bottom, "📤  Backup",    1, self._export_backup)
-        self._sb_btn(bottom, "📥  Restore",   2, self._restore_backup)
-        self._sb_btn(bottom, "📋  Import CSV",3, self._import_csv)
-        self._sb_btn(bottom, "ℹ️  About",     4, self._open_about)
-        self._sb_btn(bottom, "🔒  Lock",      5, self._on_lock,
+        self._sb_btn(bottom, "🔑  Generator",   0, self._open_generator)
+        self._sb_btn(bottom, "📤  Backup",     1, self._export_backup)
+        self._sb_btn(bottom, "📥  Restore",    2, self._restore_backup)
+        self._sb_btn(bottom, "⏱  Auto Backup", 3, self._open_schedule)
+        self._sb_btn(bottom, "📋  Import CSV", 4, self._import_csv)
+        self._sb_btn(bottom, "ℹ️  About",      5, self._open_about)
+        self._sb_btn(bottom, "🔒  Lock",       6, self._on_lock,
                      fg=DANGER, hover=DANGER_HOVER)
 
     def _sb_btn(self, parent, label, row, cmd, fg="transparent", hover=CARD_HOVER):
@@ -392,6 +394,10 @@ class MainFrame(ctk.CTkFrame):
     def _open_about(self):
         from ui.about_dialog import AboutDialog
         AboutDialog(self.winfo_toplevel())
+
+    def _open_schedule(self):
+        from ui.schedule_dialog import ScheduleDialog
+        ScheduleDialog(self.winfo_toplevel())
 
     def _open_generator(self):
         from ui.generator_dialog import GeneratorDialog

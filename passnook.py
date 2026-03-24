@@ -60,6 +60,11 @@ def _idle_seconds() -> float:
 class PassNookApp(ctk.CTk):
     def __init__(self):
         super().__init__()
+        # Set centered position before the event loop runs so the window
+        # appears at the right place from the first paint (no flash).
+        _sw = self.winfo_screenwidth()
+        _sh = self.winfo_screenheight()
+        self.geometry(f"460x560+{(_sw-460)//2}+{(_sh-560)//2}")
 
         self._vault  = VaultManager()
         self._frame  = None
@@ -90,6 +95,7 @@ class PassNookApp(ctk.CTk):
 
         self._show_lock()
         self._poll_idle()
+        self._poll_schedule()
 
     # ── tkinter compatibility (Python 3.13 + PyInstaller windowed) ───────────
 
@@ -177,6 +183,19 @@ class PassNookApp(ctk.CTk):
             except Exception:
                 pass
         self.after(60_000, self._poll_idle)   # check every 60 s
+
+    def _poll_schedule(self):
+        try:
+            from datetime import datetime
+            from core import schedule as sch
+            cfg = sch.load()
+            if sch.is_due(cfg):
+                sch.run_backup(cfg)
+                cfg["last_backup"] = datetime.now().isoformat()
+                sch.save(cfg)
+        except Exception:
+            pass
+        self.after(5 * 60 * 1000, self._poll_schedule)   # check every 5 min
 
     # ── Tray ──────────────────────────────────────────────────────────────────
 
